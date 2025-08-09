@@ -1,6 +1,6 @@
 ## wenv - An all in one web environment(nginx + mysql/mariadb + php) supporting both windows, ubuntu, macos
 
-[![Latest Release](https://img.shields.io/github/v/release/simdsoft/wenv?label=release)](https://github.com/simdsoft/wenv/releases)
+[![Latest Release](https://img.shields.io/github/v/release/simdsoft/wenv-pub?label=release)](https://github.com/simdsoft/wenv-pub/releases)
 
 ## Support platforms
 
