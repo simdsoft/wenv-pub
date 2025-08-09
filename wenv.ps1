@@ -238,7 +238,7 @@ $actions = @{
             $props_lines = @(
                 "mysql_pass=$mysql_pass",
                 'domain_list=local.wenv.dev'
-                'service_list=nginx,php,mariadb'
+                'service_list=nginx,php,mysql'
             )
             Set-Content -Path $prop_file -Value $props_lines
         }
