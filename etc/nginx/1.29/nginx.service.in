@@ -1,0 +1,14 @@
+[Unit]
+Description=Nginx HTTP Server
+After=network.target
+
+[Service]
+Type=forking
+WorkingDirectory=@NGINX_INST_DIR@
+ExecStart=@NGINX_INST_DIR@/sbin/nginx -c ../../../etc/nginx/1.27/nginx.conf
+ExecReload=@NGINX_INST_DIR@/sbin/nginx -s reload -c ../../../etc/nginx/1.27/nginx.conf
+ExecStop=@NGINX_INST_DIR@/sbin/nginx -s stop
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

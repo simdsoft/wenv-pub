@@ -1,0 +1,20 @@
+#!/bin/bash -l
+
+SCRIPT_ROOT=$(dirname "$0")
+SCRIPT_ROOT=$(cd "$SCRIPT_ROOT" && pwd -P)
+
+if hash pwsh 2>/dev/null; then
+    POWERSHELL=pwsh
+else
+    sudo apt update
+    # sudo snap install powershell --classic
+    $SCRIPT_ROOT/contrib/install-pwsh.sh
+    if hash pwsh 2>/dev/null; then
+        POWERSHELL=pwsh
+    else
+        echo "PowerShell 7+ required."
+        exit 1
+    fi
+fi
+
+$POWERSHELL "$SCRIPT_ROOT/wenv.ps1" "$@"

@@ -1,0 +1,114 @@
+#user  nobody;
+worker_processes  auto;
+
+#error_log  logs/error.log;
+#error_log  logs/error.log  notice;
+#error_log  logs/error.log  info;
+
+#pid        logs/nginx.pid;
+
+
+events {
+    worker_connections  1024;
+}
+
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    #log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+    #                  '$status $body_bytes_sent "$http_referer" '
+    #                  '"$http_user_agent" "$http_x_forwarded_for"';
+
+    #access_log  logs/access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+
+    client_max_body_size 128m;
+
+    server_names_hash_max_size 2048;
+    server_names_hash_bucket_size 128;
+    
+    fastcgi_connect_timeout 60s;
+    fastcgi_send_timeout 60s;
+    fastcgi_read_timeout 60s;
+
+    gzip  on;
+
+    add_header 'Cross-Origin-Embedder-Policy' 'credentialless';
+    add_header 'Cross-Origin-Opener-Policy' 'same-origin';
+    add_header 'Cross-Origin-Resource-Policy' 'cross-origin';
+
+    # HTTP server
+    #
+    server {
+       listen       80;
+       server_name  @wenv_domain_list@;
+       return 301 https://$host$request_uri;
+    }
+
+    # HTTPS server
+    #
+    server {
+       listen 443 ssl;
+       http2 on;
+
+       # listen 443 quic reuseport;
+       # add_header Alt-Svc 'h3=":443"; ma=86400';
+
+       server_name  @wenv_domain_list@;
+       # relative path not work, will cause php 'No input file specified'
+       # use $realpath_root also not work
+       set $wenv_root @wenv_root@;
+
+       ssl_certificate     @wenv_cert_dir@/server.crt;
+       ssl_certificate_key  @wenv_cert_dir@/server.key;
+
+       ssl_session_cache    shared:SSL:1m;
+       ssl_session_timeout  5m;
+
+       ssl_ciphers  HIGH:!aNULL:!MD5;
+       ssl_prefer_server_ciphers  on;
+
+       error_page  404  403    /404.html;
+
+       # redirect server error pages to the static page /50x.html
+       #
+       error_page  500 502 503 504  /50x.html;
+
+       location / {
+           root $wenv_root/htdocs;
+           
+           location ~ \.php$ {
+              try_files $uri $uri/ =404;
+              fastcgi_pass   @wenv_fastcgi_pass@;
+              fastcgi_index  index.php;
+              include fastcgi_params;
+              fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+              fastcgi_intercept_errors on;
+           }
+
+           index  index.php index.html index.htm;
+       }
+
+       location /phpmyadmin {
+         rewrite ^/phpmyadmin$ /phpmyadmin/ permanent;
+         alias $wenv_root/opt/phpmyadmin/@phpmyadmin_ver@/;
+         location ~ ^/phpmyadmin/(.+\.php)$ {
+           try_files $uri =404;
+           fastcgi_pass   @wenv_fastcgi_pass@;
+           fastcgi_index  index.php;
+           include fastcgi_params;
+           # $document_root$fastcgi_script_name not work
+           # $request_filename also works, not not perform rewrite /phpmyadmin/
+           fastcgi_param  SCRIPT_FILENAME $document_root$1;
+         }
+         index  index.php index.html index.htm;
+       }
+    }
+}
